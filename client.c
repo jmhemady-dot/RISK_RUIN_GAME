@@ -44,7 +44,6 @@ int main(int argc, char *argv[]) {
         buffer[n] = '\0';
         printf("%s", buffer);
 
-        // ✅ FIXED INPUT TRIGGER
         if (strstr(buffer, "IGN") || strstr(buffer, "Choose action")) {
             printf("> ");
 
