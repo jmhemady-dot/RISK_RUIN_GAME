@@ -18,7 +18,6 @@ void send_msg(int sock, const char *msg) {
     send(sock, msg, strlen(msg), 0);
 }
 
-//takes what the player type, cleans it and gives nice clean words to use in the game
 int recv_msg(int sock, char *buffer) {
     bzero(buffer, MAX);
     int n = recv(sock, buffer, MAX - 1, 0);
@@ -29,7 +28,6 @@ int recv_msg(int sock, char *buffer) {
     return n;
 }
 
-//instruction
 void send_instructions(int sock) {
     char *rules =
       "\n===============================================================\n"
@@ -63,18 +61,17 @@ void send_instructions(int sock) {
     send_msg(sock, rules);
 }
 
-//checking of spy move
 int is_spy(char *action, Player *p) {
     return (strncmp(action, "spy", 3) == 0 && p->spy_count > 0);
 }
 
-//checking valid moves
 int is_valid_action(char *a, Player *p) {
     if (strcmp(a, "work") == 0) return 1;
     if (strcmp(a, "attack") == 0 && p->money >= 2) return 1;
     if (strcmp(a, "defend") == 0 && p->money >= 1) return 1;
     if (strcmp(a, "loan") == 0 && p->loan_timer == -1) return 1;
     if (strcmp(a, "spy") == 0 && p->spy_count > 0) return 1;
+    if (strcmp(a, "allin") == 0 && p->money > 0) return 1;
     return 0;
 }
 
@@ -83,36 +80,31 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in server_addr, client_addr;
     socklen_t len = sizeof(client_addr);
     char buffer[MAX];
-
-    //default stats
+    
     Player p1 = {"", 10, 5, 2, -1};
     Player p2 = {"", 10, 5, 2, -1};
 
-    //If the user didn’t give a port number, stop the program
     if (argc < 2) {
         printf("Usage: %s port\n", argv[0]);
         exit(1);
     }
 
-    //This converts text → number
     port = atoi(argv[1]);
-    //This creates your server connection
     server_sock = socket(AF_INET, SOCK_STREAM, 0);
 
-    //Allow me to reuse this port immediately
     int opt = 1;
     setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     bzero((char*)&server_addr, sizeof(server_addr));
-    server_addr.sin_family = AF_INET; //Use IPv4 (normal internet)
-    server_addr.sin_addr.s_addr = INADDR_ANY; //Any device can connect
-    server_addr.sin_port = htons(port); //Sets your port (like 5001)
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(port);
 
-    bind(server_sock, (struct sockaddr*)&server_addr, sizeof(server_addr)); //Connect my server to this address and port
-    listen(server_sock, 2); //Start waiting for players to connect
+    bind(server_sock, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    listen(server_sock, 2);
 
     printf("Waiting for Player 1...\n");
-    p1_sock = accept(server_sock, (struct sockaddr*)&client_addr, &len); //Pause and wait until a player connects
+    p1_sock = accept(server_sock, (struct sockaddr*)&client_addr, &len);
     send_msg(p1_sock, "Connected! Waiting for Player 2...\n");
 
     printf("Waiting for Player 2...\n");
@@ -271,7 +263,6 @@ int main(int argc, char *argv[]) {
         int p1_spy = is_spy(p1_action, &p1);
         int p2_spy = is_spy(p2_action, &p2);
 
-        //if both players uses spy move
         if (p1_spy && p2_spy) {
             p1.spy_count--;
             p2.spy_count--;
@@ -331,6 +322,14 @@ int main(int argc, char *argv[]) {
             } else {
                 send_msg(p1_sock, "[WARNING] You already have an active loan.\n");
             }
+        } else if (strcmp(p1_action, "allin") == 0) {
+            if (p1.money <= 0) {
+                send_msg(p1_sock, "[ERROR] No money for ALL-IN!\n");
+            } else {
+                d2 = 4;
+                p1.money = 0;
+                send_msg(p1_sock, "[ALL-IN] You sacrificed everything for 4 DMG!\n");
+            }
         }
 
         if (strcmp(p2_action, "attack") == 0 && p2.money >= 2) {
@@ -347,16 +346,22 @@ int main(int argc, char *argv[]) {
             } else {
                 send_msg(p2_sock, "[WARNING] You already have an active loan.\n");
             }
-        }
+          } else if (strcmp(p2_action, "allin") == 0) {
+              if (p2.money <= 0) {
+                  send_msg(p2_sock, "[ERROR] No money for ALL-IN!\n");
+              } else {
+                  d1 = 4;
+                  p2.money = 0;
+                  send_msg(p2_sock, "[ALL-IN] You sacrificed everything for 4 DMG!\n");
+              }
+          }
 
         if (strcmp(p1_action, "defend") == 0) d1--;
         if (strcmp(p2_action, "defend") == 0) d2--;
 
-        //prevents negative damage
         if (d1 < 0) d1 = 0;
         if (d2 < 0) d2 = 0;
 
-        //subtract damage to hp
         p1.hp -= d1;
         p2.hp -= d2;
 
