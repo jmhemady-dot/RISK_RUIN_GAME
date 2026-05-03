@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <sys/select.h>
 
 #define MAX 512
 
@@ -36,17 +37,30 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    fd_set readfds;
+
     while (1) {
-        bzero(buffer, MAX);
-        int n = recv(sock, buffer, MAX - 1, 0);
-        if (n <= 0) break;
+        FD_ZERO(&readfds);
+        FD_SET(sock, &readfds);          // listen to server
+        FD_SET(STDIN_FILENO, &readfds);  // listen to keyboard
 
-        buffer[n] = '\0';
-        printf("%s", buffer);
+        int maxfd = (sock > STDIN_FILENO ? sock : STDIN_FILENO) + 1;
 
-        if (strstr(buffer, "IGN") || strstr(buffer, "Choose action")) {
-            printf("> ");
+        if (select(maxfd, &readfds, NULL, NULL, NULL) < 0) {
+            perror("select error");
+            break;
+        }
 
+        if (FD_ISSET(sock, &readfds)) {
+            int n = recv(sock, buffer, MAX - 1, 0);
+            if (n <= 0) break;
+
+            buffer[n] = '\0';
+            printf("%s", buffer);
+            fflush(stdout);
+        }
+
+        if (FD_ISSET(STDIN_FILENO, &readfds)) {
             bzero(buffer, MAX);
             fgets(buffer, MAX, stdin);
 
