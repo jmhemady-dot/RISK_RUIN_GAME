@@ -177,10 +177,27 @@ int main(int argc, char *argv[]) {
     send_msg(p1_sock, "[START] Both players ready. Game starting...\n");
     send_msg(p2_sock, "[START] Both players ready. Game starting...\n");
 
-
+    int p1_score = 0;
+    int p2_score = 0;
     int round = 1;
     int p1_total_damage = 0, p2_total_damage = 0;
     int p1_spy_count = 0, p2_spy_count = 0;
+    
+    while (p1_score < 2 && p2_score < 2) {
+    
+    p1.hp = 10;
+    p2.hp = 10;
+
+    p1.money = 5;
+    p2.money = 5;
+
+    p1.spy_count = 2;
+    p2.spy_count = 2;
+
+    p1.loan_timer = -1;
+    p2.loan_timer = -1;
+
+    round = 1;
     
     while (p1.hp > 0 && p2.hp > 0) {
     
@@ -192,35 +209,6 @@ int main(int argc, char *argv[]) {
     char p1_action[MAX], p2_action[MAX];
     char p1_display[64], p2_display[64];
     char summary[MAX];
-
-        // ===== LOAN COUNTDOWN (FAIR) =====
-        if (p1.loan_timer > 0) {
-            p1.loan_timer--;
-            if (p1.loan_timer == 0) {
-                if (p1.money >= 7) {
-                    p1.money -= 7;
-                    send_msg(p1_sock, "[INFO] Loan paid successfully.\n");
-                } else {
-                    p1.hp -= 3;
-                    send_msg(p1_sock, "[PENALTY] Failed to pay loan. -3 HP\n");
-                }
-                p1.loan_timer = -1;
-            }
-        }
-
-        if (p2.loan_timer > 0) {
-            p2.loan_timer--;
-            if (p2.loan_timer == 0) {
-                if (p2.money >= 7) {
-                    p2.money -= 7;
-                    send_msg(p2_sock, "[INFO] Loan paid successfully.\n");
-                } else {
-                    p2.hp -= 3;
-                    send_msg(p2_sock, "[PENALTY] Failed to pay loan. -3 HP\n");
-                }
-                p2.loan_timer = -1;
-            }
-        }
 
         // ===== PRESSURE SYSTEM =====
 
@@ -277,29 +265,36 @@ int main(int argc, char *argv[]) {
         else
             strcpy(loan2, "NONE");
 
-        sprintf(buffer,
-            "\n== ROUND %d =================================\n"
-            "                STATUS PANEL                \n"
-            "============================================\n"
+          sprintf(buffer,
+          "\n==================================================\n"
+          "                MATCH %d  |  ROUND %d\n"
+          "==================================================\n"
 
-            "  [%s]\n"
-            "  HP    : %d\n"
-            "  MONEY : $%d\n"
-            "  SPY   : %d\n"
-            "  LOAN  : %s\n"
-            "--------------------------------------------\n"
+          "[%s]  SCORE:%d\n"
+          " HP    : %d\n"
+          " MONEY : $%d\n"
+          " SPY   : %d\n"
+          " LOAN  : %s\n"
 
-            "  [%s]\n"
-            "  HP    : %d\n"
-            "  MONEY : $%d\n"
-            "  SPY   : %d\n"
-            "  LOAN  : %s\n"
-            "============================================\n",
+          "--------------------------------------------------\n"
 
-            round,
-            p1.name, p1.hp, p1.money, p1.spy_count, loan1,
-            p2.name, p2.hp, p2.money, p2.spy_count, loan2
-        );
+          "[%s]  SCORE:%d\n"
+          " HP    : %d\n"
+          " MONEY : $%d\n"
+          " SPY   : %d\n"
+          " LOAN  : %s\n"
+
+          "==================================================\n",
+
+          p1_score + p2_score + 1,
+          round,
+
+          p1.name, p1_score,
+          p1.hp, p1.money, p1.spy_count, loan1,
+
+          p2.name, p2_score,
+          p2.hp, p2.money, p2.spy_count, loan2
+          );
         send_msg(p1_sock, buffer);
         send_msg(p2_sock, buffer);
         
@@ -314,7 +309,7 @@ int main(int argc, char *argv[]) {
             send_msg(p1_sock, "[WARNING] Final turn to pay your loan!\n");
         }
 
-        if (p2.hp <= 3 && p1.money >= 4) {
+        if (p2.hp <= 2 && p1.money >= 4) {
             send_msg(p1_sock, "[TIP] You can finish with ALL-IN!\n");
         }
 
@@ -331,7 +326,7 @@ int main(int argc, char *argv[]) {
             send_msg(p2_sock, "[WARNING] Final turn to pay your loan!\n");
         }
 
-        if (p1.hp <= 3 && p2.money >= 4) {
+        if (p1.hp <= 2 && p2.money >= 4) {
             send_msg(p2_sock, "[TIP] You can finish with ALL-IN!\n");
         }
 
@@ -360,9 +355,17 @@ int main(int argc, char *argv[]) {
             if (FD_ISSET(p1_sock, &readfds) && !p1_done) {
                 recv_msg(p1_sock, p1_action);
 
-                if (!is_valid_action(p1_action, &p1)) {
+                if (strcmp(p1_action, "spy") == 0 && p1.spy_count <= 0) {
+
+                    send_msg(p1_sock, "[ERROR] Insufficient spy charges!\n");
+                    send_msg(p1_sock, "Choose action: ");
+
+                }
+                else if (!is_valid_action(p1_action, &p1)) {
+
                     send_msg(p1_sock, "[ERROR] Invalid action.\n");
                     send_msg(p1_sock, "Choose action: ");
+
                 }
                 else if (strcmp(p1_action, "attack") == 0 && p1.money < 2) {
                     send_msg(p1_sock, "[ERROR] Not enough money!\n");
@@ -389,9 +392,17 @@ int main(int argc, char *argv[]) {
             if (FD_ISSET(p2_sock, &readfds) && !p2_done) {
                 recv_msg(p2_sock, p2_action);
 
-                if (!is_valid_action(p2_action, &p2)) {
+                if (strcmp(p2_action, "spy") == 0 && p2.spy_count <= 0) {
+
+                    send_msg(p2_sock, "[ERROR] Insufficient spy charges!\n");
+                    send_msg(p2_sock, "Choose action: ");
+
+                }
+                else if (!is_valid_action(p2_action, &p2)) {
+
                     send_msg(p2_sock, "[ERROR] Invalid action.\n");
                     send_msg(p2_sock, "Choose action: ");
+
                 }
                 else if (strcmp(p2_action, "attack") == 0 && p2.money < 2) {
                     send_msg(p2_sock, "[ERROR] Not enough money!\n");
@@ -430,7 +441,7 @@ int main(int argc, char *argv[]) {
         }
         else if (p1_spy && !p2_spy) {
             p1.spy_count--;
-            p1.spy_count++;
+            p1_spy_count++;
             
             snprintf(buffer, MAX, "[SPY] Opponent chose: %.50s\n", p2_action);
             send_msg(p1_sock, buffer);
@@ -440,14 +451,20 @@ int main(int argc, char *argv[]) {
                 recv_msg(p1_sock, p1_action);
 
                 if (!is_valid_action(p1_action, &p1)) {
-                    send_msg(p1_sock, "[ERROR] Invalid action.\n");
+
+                    if (strcmp(p1_action, "spy") == 0 && p1.spy_count <= 0) {
+                        send_msg(p1_sock, "[ERROR] Insufficient spy charges!\n");
+                    }
+                    else {
+                        send_msg(p1_sock, "[ERROR] Invalid action.\n");
+                    }
                 }
 
             } while (!is_valid_action(p1_action, &p1));
         }
         else if (p2_spy && !p1_spy) {
             p2.spy_count--;
-            p2.spy_count++;
+            p2_spy_count++;
             
             snprintf(buffer, MAX, "[SPY] Opponent chose: %.50s\n", p1_action);
             send_msg(p2_sock, buffer);
@@ -457,7 +474,13 @@ int main(int argc, char *argv[]) {
                 recv_msg(p2_sock, p2_action);
 
                 if (!is_valid_action(p2_action, &p2)) {
-                    send_msg(p2_sock, "[ERROR] Invalid action.\n");
+
+                    if (strcmp(p2_action, "spy") == 0 && p2.spy_count <= 0) {
+                        send_msg(p2_sock, "[ERROR] Insufficient spy charges!\n");
+                    }
+                    else {
+                        send_msg(p2_sock, "[ERROR] Invalid action.\n");
+                    }
                 }
 
             } while (!is_valid_action(p2_action, &p2));
@@ -560,11 +583,44 @@ int main(int argc, char *argv[]) {
         p1.hp -= d1;
         p2.hp -= d2;
         
-        p1_total_damage += d2;  
-        p2_total_damage += d1;  
+        // ===== LOAN COUNTDOWN (FAIR) =====
+        if (p1.loan_timer > 0) {
+            p1.loan_timer--;
+            if (p1.loan_timer == 0) {
+                if (p1.money >= 7) {
+                    p1.money -= 7;
+                    send_msg(p1_sock, "[INFO] Loan paid successfully.\n");
+                } else {
+                    p1.hp -= 3;
+                    
+                    d1 += 3;
+                    send_msg(p1_sock, "[PENALTY] Failed to pay loan. -3 HP\n");
+                }
+                p1.loan_timer = -1;
+            }
+        }
+
+        if (p2.loan_timer > 0) {
+            p2.loan_timer--;
+            if (p2.loan_timer == 0) {
+                if (p2.money >= 7) {
+                    p2.money -= 7;
+                    send_msg(p2_sock, "[INFO] Loan paid successfully.\n");
+                } else {
+                    p2.hp -= 3;
+                    
+                    d2 += 3;
+                    send_msg(p2_sock, "[PENALTY] Failed to pay loan. -3 HP\n");
+                }
+                p2.loan_timer = -1;
+            }
+        }
         
         if (p1.hp < 0) p1.hp = 0;
         if (p2.hp < 0) p2.hp = 0;
+        
+        p1_total_damage += d2;  
+        p2_total_damage += d1;  
         
         send_msg(p1_sock, "Round resolved!\n");
         send_msg(p2_sock, "Round resolved!\n");
@@ -574,16 +630,19 @@ int main(int argc, char *argv[]) {
         snprintf(p2_display, sizeof(p2_display), "%.10s", p2_action);
             
         snprintf(summary, MAX,
-            "\n========= ROUND %d SUMMARY =========\n"
-            "  %s used %s | %s used %s\n"
-            "-----------------------------------\n"
-            "   %s lost %d HP | %s lost %d HP\n"
-            "===================================\n",
-            round,
-            p1.name, p1_display,
-            p2.name, p2_display,
-            p1.name, d1,
-            p2.name, d2
+        "\n==================================================\n"
+        "                ROUND %d SUMMARY\n"
+        "==================================================\n"
+
+        " %-10s | USED : %-10s | DAMAGE : -%-2d HP\n"
+        " %-10s | USED : %-10s | DAMAGE : -%-2d HP\n"
+
+        "==================================================\n",
+
+        round,
+
+        p1.name, p1_display, d1,
+        p2.name, p2_display, d2
         );
 
         send_msg(p1_sock, summary);
@@ -595,6 +654,66 @@ int main(int argc, char *argv[]) {
         
         round++; 
     }
+
+    if (p1.hp <= 0 && p2.hp <= 0) {
+
+    send_msg(p1_sock, "Draw Round!\n");
+    send_msg(p2_sock, "Draw Round!\n");
+
+    }
+    else if (p1.hp <= 0) {
+
+        p2_score++;
+
+        snprintf(buffer, MAX,
+            "\n%s wins this round!\n",
+            p2.name);
+
+        send_msg(p1_sock, buffer);
+        send_msg(p2_sock, buffer);
+
+    }
+    else {
+
+        p1_score++;
+
+        snprintf(buffer, MAX,
+            "\n%s wins this round!\n",
+            p1.name);
+
+        send_msg(p1_sock, buffer);
+        send_msg(p2_sock, buffer);
+    }
+    if (p1_score < 2 && p2_score < 2) {
+
+        snprintf(buffer, MAX,
+          "\n==================================================\n"
+          "               NEXT MATCH STARTING\n"
+          "\n"
+          "        CURRENT SCORE: %s (%d) - %s (%d)\n"
+          "==================================================\n",
+          p1.name, p1_score,
+          p2.name, p2_score);
+
+        send_msg(p1_sock, buffer);
+        send_msg(p2_sock, buffer);
+    }
+    }
+    
+    if (p1_score == 2) {
+
+    snprintf(buffer, MAX,
+        "\n%s WINS THE MATCH!\n", p1.name);
+
+    }
+    else {
+
+        snprintf(buffer, MAX,
+            "\n%s WINS THE MATCH!\n", p2.name);
+    }
+
+    send_msg(p1_sock, buffer);
+    send_msg(p2_sock, buffer);
     
     char final[MAX];
 
@@ -621,34 +740,6 @@ int main(int argc, char *argv[]) {
     send_msg(p1_sock, final);
     send_msg(p2_sock, final);
     
-    // FINAL RESULT
-    int p1_score = 0, p2_score = 0;
-
-    if (p1.hp <= 0 && p2.hp <= 0) {
-        send_msg(p1_sock, "Draw!\n");
-        send_msg(p2_sock, "Draw!\n");
-    }
-    else if (p1.hp <= 0) {
-        p2_score = 1;
-        snprintf(buffer, MAX, "%s WINS!\n", p2.name);
-        send_msg(p1_sock, buffer);
-        send_msg(p2_sock, buffer);
-    }
-    else {
-        p1_score = 1;
-        snprintf(buffer, MAX, "%s WINS!\n", p1.name);
-        send_msg(p1_sock, buffer);
-        send_msg(p2_sock, buffer);
-    }
-
-    snprintf(buffer, MAX,
-        "\nFINAL SCORE: %s (%d) vs %s (%d)\nGAME OVER!!!\n",
-        p1.name, p1_score,
-        p2.name, p2_score);
-
-    send_msg(p1_sock, buffer);
-    send_msg(p2_sock, buffer);
-
     close(p1_sock);
     close(p2_sock);
     close(server_sock);
