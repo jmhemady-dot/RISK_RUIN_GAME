@@ -648,8 +648,8 @@ int main(int argc, char *argv[]) {
             send_msg(p1_sock, "[WARNING] Final turn to pay your loan!\n");
         }
 
-        if (p2.hp <= 2 && p1.money >= 4) {
-            send_msg(p1_sock, "[TIP] You can finish with ALL-IN!\n");
+        if ((p1.money / 2) >= p2.hp && p1.money > 0) {
+            send_msg(p1_sock, "[TIP] ALL-IN can eliminate your opponent this round!\n");
         }
 
         if (p2.money >= 7) {
@@ -665,8 +665,8 @@ int main(int argc, char *argv[]) {
             send_msg(p2_sock, "[WARNING] Final turn to pay your loan!\n");
         }
 
-        if (p1.hp <= 2 && p2.money >= 4) {
-            send_msg(p2_sock, "[TIP] You can finish with ALL-IN!\n");
+        if ((p2.money / 2) >= p1.hp && p2.money > 0) {
+            send_msg(p2_sock, "[TIP] ALL-IN can eliminate your opponent this round!\n");
         }
 
         if (p1.money >= 7) {
