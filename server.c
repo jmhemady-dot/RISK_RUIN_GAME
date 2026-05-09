@@ -4,7 +4,17 @@
 #include <unistd.h>
 #include <netinet/in.h>
 
-#define MAX 2048
+#define MAX 8192
+
+#define RED     "\x1b[31m"
+#define GREEN   "\x1b[32m"
+#define YELLOW  "\x1b[33m"
+#define BLUE    "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN    "\x1b[36m"
+#define WHITE   "\x1b[37m"
+#define GOLD    "\x1b[93m"
+#define RESET   "\x1b[0m"
 
 typedef struct {
     char name[31];
@@ -32,35 +42,126 @@ void send_instructions(int sock, Player *p) {
     char rules[MAX];
   
     snprintf(rules, MAX,
-    "\n===============================================================\n"
-    "             WELCOME %s TO THE RISK OR RUIN GAME\n"
-    "===============================================================\n"
+    "\n"
+    CYAN 
+    "╔════════════════════════════════════════════════════════════════════╗\n"
+    "║                      WELCOME TO RISK OR RUIN                       ║\n"
+    "╠════════════════════════════════════════════════════════════════════╣\n"
+    RESET
+    
+    YELLOW
+    "║                        PLAYER : %-30s     ║\n"
+    RESET
+    
+    CYAN
+    "╚════════════════════════════════════════════════════════════════════╝\n"
+    RESET
+    
+    "\n"
+    
+    GREEN
+    "      A turn-based battle of strategy, prediction, and survival.\n"
+    "        Outsmart your opponent, manage your resources wisely,\n"
+    "                   and become the final victor.\n"
+    RESET
+    
+    "\n"
+    
+    GOLD
+    "  ┌────────────────────────── OBJECTIVE ──────────────────────────┐\n"
+    RESET
+    
+    WHITE
+    "  │ Defeat your opponent by reducing their HP to 0.               │\n"
+    "  │ First player to win 2 matches becomes the champion.           │\n"
+    RESET
+    
+    GOLD
+    "  └───────────────────────────────────────────────────────────────┘\n"
+    RESET
 
-    "GAME OVERVIEW:\n"
-    "You and your opponent are in a battle of survival and strategy.\n"
-    "Manage your money, predict your opponent, and outplay them.\n"
     "\n"
-    "Each turn, both players choose an action.\n"
-    "Actions can deal damage, generate money, or set up future plays.\n"
-    "\n"
-    "Be careful with loans — they give instant advantage,\n"
-    "but failing to repay will cost you HP.\n"
-    "\n"
-    "Win by reducing your opponent's HP to 0.\n"
-    "Think ahead. Every decision matters.\n"
+    
+    MAGENTA
+    "  ┌────────────────────────── COMMANDS ───────────────────────────┐\n"
+    RESET
+    
+    GREEN
+    "  │ WORK                                                          │\n"
+    RESET
+    "  │   Gain $2 safely. No risk involved.                           │\n"
 
-    "---------------------------------------------------------------\n"
-    "COMMANDS:\n"
-    " - work   : Gain $2. No risk.\n"
-    " - attack : Costs $2, deals 2 DMG.\n"
-    " - defend : Costs $1, reduces incoming damage by 50%%.\n"
-    " - loan   : Gain $5 instantly. In 3 turns, pay\n"
-    "            back $7 or lose 3 HP.\n"
-    " - spy    : Costs 1 Spy charge. Reveal enemy\n"
-    "            move and choose again.\n"
-    " - allin  : Costs EVERYTHING.\n" 
-    "            Deals damage equal to HALF your money.\n"
-    "===============================================================\n\n",
+    "  │                                                               │\n"
+    RED
+    "  │ ATTACK                                                        │\n"
+    RESET
+    "  │   Cost : $2  •  Deal 2 damage.                                │\n"
+
+    "  │                                                               │\n"
+    BLUE
+    "  │ DEFEND                                                        │\n"
+    RESET
+    "  │   Cost : $1  •  Reduce incoming damage by 50%%.                │\n"
+
+    "  │                                                               │\n"
+    YELLOW
+    "  │ LOAN                                                          │\n"
+    RESET
+    "  │   Gain $5 instantly.                                          │\n"
+    "  │   Repay $7 after 3 turns or lose 3 HP.                        │\n"
+
+    "  │                                                               │\n"
+    
+    CYAN
+    "  │ SPY                                                           │\n"
+    RESET
+    "  │   Uses 1 Spy charge.                                          │\n"
+    "  │   Reveal opponent action and choose again.                    │\n"
+    "  │   If both players use SPY, no information is revealed.        │\n"
+
+    "  │                                                               │\n"
+
+    MAGENTA
+    "  │ ALL-IN                                                        │\n"
+    RESET
+    "  │   Risk ALL your money for massive damage.                     │\n"
+    "  │   Damage equals HALF of your total money.                     │\n"
+    
+    MAGENTA
+    "  └───────────────────────────────────────────────────────────────┘\n"
+    RESET
+
+    "\n"
+    
+    GOLD
+    "  ┌──────────────────────────── TIPS ────────────────────────────┐\n"
+    RESET
+    
+    WHITE
+    "  │ • Watch your opponent's money carefully.                     │\n"
+    "  │ • Save SPY charges for important turns.                      │\n"
+    "  │ • Loans can save you — or destroy you.                       │\n"
+    "  │ • One smart move can change the entire battle.               │\n"
+    RESET
+    
+    GOLD
+    "  └──────────────────────────────────────────────────────────────┘\n"
+    RESET
+
+    "\n"
+
+    CYAN
+    "════════════════════════════════════════════════════════════════════\n"
+    RESET
+    
+    GREEN
+    "                        PREPARE FOR BATTLE\n"
+    RESET
+    
+    CYAN
+    "════════════════════════════════════════════════════════════════════\n\n"
+    RESET,
+    
     p->name
     );
 
@@ -176,12 +277,26 @@ int main(int argc, char *argv[]) {
     // ===== START GAME =====
     send_msg(p1_sock, "[START] Both players ready. Game starting...\n");
     send_msg(p2_sock, "[START] Both players ready. Game starting...\n");
-
+    
+    send_msg(p1_sock, "\033[2J\033[H");
+    send_msg(p2_sock, "\033[2J\033[H");
+    
+    
+    while (1) {
+    
     int p1_score = 0;
     int p2_score = 0;
     int round = 1;
+    int match = 1;
+
     int p1_total_damage = 0, p2_total_damage = 0;
     int p1_spy_count = 0, p2_spy_count = 0;
+
+    int p1_attack = 0, p2_attack = 0;
+    int p1_defend = 0, p2_defend = 0;
+    int p1_work = 0, p2_work = 0;
+    int p1_loan = 0, p2_loan = 0;
+    int p1_allin = 0, p2_allin = 0;
     
     while (p1_score < 2 && p2_score < 2) {
     
@@ -199,13 +314,31 @@ int main(int argc, char *argv[]) {
 
     round = 1;
     
+    char prev_summary1[MAX] = "";
+    char prev_summary2[MAX] = "";
+    
     while (p1.hp > 0 && p2.hp > 0) {
     
-    int p1_actions = 0, p2_actions = 0;
+    if (round > 1) {
 
-    int p1_attack = 0, p1_defend = 0, p1_work = 0, p1_loan = 0, p1_allin = 0;
-    int p2_attack = 0, p2_defend = 0, p2_work = 0, p2_loan = 0, p2_allin = 0;
-        
+        send_msg(p1_sock, "\033[2J\033[H");
+        send_msg(p2_sock, "\033[2J\033[H");
+
+        send_msg(p1_sock, prev_summary1);
+        send_msg(p2_sock, prev_summary2);
+
+        send_msg(p1_sock, "\n");
+        send_msg(p2_sock, "\n");
+    }
+    
+    int p1_actions = 0, p2_actions = 0;
+    
+    char penalty1[128] = "";
+    char penalty2[128] = "";
+    
+    char event1[256] = "";
+    char event2[256] = "";
+    
     char p1_action[MAX], p2_action[MAX];
     char p1_display[64], p2_display[64];
     char summary[MAX];
@@ -264,36 +397,240 @@ int main(int argc, char *argv[]) {
                 "ACTIVE (%d turns left, owe $7)", p2.loan_timer);
         else
             strcpy(loan2, "NONE");
+          
+          char hp_bar1[128] = "";
+          char hp_bar2[128] = "";
+          
+          char money_bar1[128] = "";
+          char money_bar2[128] = "";
+          
+          char spy_bar1[32] = "";
+          char spy_bar2[32] = "";
 
+          // ================= MONEY DISPLAY LIMIT =================
+
+          int money_display1 = p1.money;
+          int money_display2 = p2.money;
+
+          if (money_display1 > 10)
+              money_display1 = 10;
+
+          if (money_display2 > 10)
+              money_display2 = 10;
+
+          // ================= PLAYER 1 MONEY BAR =================
+
+          strcat(money_bar1, GOLD);
+
+          for (int i = 0; i < money_display1; i++)
+              strcat(money_bar1, "▰");
+
+          for (int i = money_display1; i < 10; i++)
+              strcat(money_bar1, "▱");
+
+          strcat(money_bar1, RESET);
+
+          // ================= PLAYER 2 MONEY BAR =================
+
+          strcat(money_bar2, GOLD);
+
+          for (int i = 0; i < money_display2; i++)
+              strcat(money_bar2, "▰");
+
+          for (int i = money_display2; i < 10; i++)
+              strcat(money_bar2, "▱");
+
+          strcat(money_bar2, RESET);
+          
+          // ================= PLAYER 1 HP BAR =================
+
+          const char *p1_color;
+
+          if (p1.hp >= 7)
+              p1_color = GREEN;
+          else if (p1.hp >= 4)
+              p1_color = YELLOW;
+          else
+              p1_color = RED;
+
+          strcat(hp_bar1, p1_color);
+
+          for (int i = 0; i < p1.hp; i++)
+              strcat(hp_bar1, "▰");
+
+          for (int i = p1.hp; i < 10; i++)
+              strcat(hp_bar1, "▱");
+
+          strcat(hp_bar1, RESET);
+
+
+          // ================= PLAYER 2 HP BAR =================
+
+          const char *p2_color;
+
+          if (p2.hp >= 7)
+              p2_color = GREEN;
+          else if (p2.hp >= 4)
+              p2_color = YELLOW;
+          else
+              p2_color = RED;
+
+          strcat(hp_bar2, p2_color);
+
+          for (int i = 0; i < p2.hp; i++)
+              strcat(hp_bar2, "▰");
+
+          for (int i = p2.hp; i < 10; i++)
+              strcat(hp_bar2, "▱");
+
+          strcat(hp_bar2, RESET);
+          
+          // ================= PLAYER 1 SPY BAR =================
+
+          strcat(spy_bar1, CYAN);
+
+          for (int i = 0; i < p1.spy_count; i++)
+              strcat(spy_bar1, "◉");
+
+          for (int i = p1.spy_count; i < 2; i++)
+              strcat(spy_bar1, "○");
+
+          strcat(spy_bar1, RESET);
+
+
+          // ================= PLAYER 2 SPY BAR =================
+
+          strcat(spy_bar2, CYAN);
+
+          for (int i = 0; i < p2.spy_count; i++)
+              strcat(spy_bar2, "◉");
+
+          for (int i = p2.spy_count; i < 2; i++)
+              strcat(spy_bar2, "○");
+
+          strcat(spy_bar2, RESET);
+          
           sprintf(buffer,
-          "\n==================================================\n"
-          "                MATCH %d  |  ROUND %d\n"
-          "==================================================\n"
 
-          "[%s]  SCORE:%d\n"
-          " HP    : %d\n"
-          " MONEY : $%d\n"
-          " SPY   : %d\n"
-          " LOAN  : %s\n"
+          "\n"
 
-          "--------------------------------------------------\n"
+          CYAN "╔════════════════════════════════════════════════════════════╗\n" RESET
+          CYAN "║" RESET
+          WHITE "                  RISK OR RUIN BATTLE                    "
+          CYAN "   ║\n" RESET
 
-          "[%s]  SCORE:%d\n"
-          " HP    : %d\n"
-          " MONEY : $%d\n"
-          " SPY   : %d\n"
-          " LOAN  : %s\n"
+          CYAN "╠════════════════════════════════════════════════════════════╣\n" RESET
 
-          "==================================================\n",
+          CYAN "║" RESET
+          YELLOW "            MATCH %-2d              ROUND %-2d             "
+          CYAN "     ║\n" RESET
 
-          p1_score + p2_score + 1,
+          CYAN "╚════════════════════════════════════════════════════════════╝\n" RESET
+
+          "\n"
+
+          /* ================= PLAYER 1 ================= */
+
+          GREEN "┌──────────────────── PLAYER 1 ──────────────────────────────┐\n" RESET
+
+          GREEN "│" RESET
+          WHITE " %-15s                       SCORE : %-2d           "
+          GREEN "│\n" RESET
+
+          GREEN "├────────────────────────────────────────────────────────────┤\n" RESET
+
+          GREEN "│" RESET
+          RED " HP    : " RESET
+          "%-40s %2d/10                  "
+          GREEN "                │\n" RESET
+
+          GREEN "│" RESET
+          YELLOW " MONEY : " RESET
+          "%-28s %-2d$   "
+          CYAN "SPY : " RESET
+          "%-10s %-2d "
+          GREEN "                      │\n" RESET
+                                       
+          GREEN "│" RESET
+          MAGENTA " LOAN  : " RESET
+          "%-48s "
+          GREEN "  │\n" RESET
+
+          GREEN "└────────────────────────────────────────────────────────────┘\n" RESET
+
+          "\n"
+
+          /* ================= PLAYER 2 ================= */
+
+          BLUE "┌──────────────────── PLAYER 2 ──────────────────────────────┐\n" RESET
+
+          BLUE "│" RESET
+          WHITE " %-15s                       SCORE : %-2d           "
+          BLUE "│\n" RESET
+
+          BLUE "├────────────────────────────────────────────────────────────┤\n" RESET
+
+          BLUE "│" RESET
+          RED " HP    : " RESET
+          "%-40s %2d/10                  "
+          BLUE "                │\n" RESET
+
+          BLUE "│" RESET
+          YELLOW " MONEY : " RESET
+          "%-28s %-2d$   "
+          CYAN "SPY : " RESET
+          "%-10s %-2d "
+          BLUE "                      │\n" RESET
+                                
+          BLUE "│" RESET
+          MAGENTA " LOAN  : " RESET
+          "%-48s "
+          BLUE "  │\n" RESET
+
+          BLUE "└────────────────────────────────────────────────────────────┘\n" RESET
+
+          "\n"
+
+          /* ================= COMMANDS ================= */
+
+          GOLD "┌──────────────────── COMMANDS ──────────────────────────────┐\n" RESET
+
+          GOLD "│" RESET
+          WHITE " WORK(+$2)  ATTACK(-$2/2DMG)  DEFEND(-$1/50%%)      "
+          GOLD "         │\n" RESET
+
+          GOLD "│" RESET
+          WHITE " LOAN(+$5)  SPY(REVEAL)       ALLIN(HALF MONEY DMG) "
+          GOLD "        │\n" RESET
+
+          GOLD "└────────────────────────────────────────────────────────────┘\n" RESET
+
+          "\n"
+
+          CYAN "══════════════════════════════════════════════════════════════\n" RESET,
+
+          match,
           round,
 
-          p1.name, p1_score,
-          p1.hp, p1.money, p1.spy_count, loan1,
+          p1.name,
+          p1_score,
+          hp_bar1,
+          p1.hp,
+          money_bar1,
+          p1.money,
+          spy_bar1,
+          p1.spy_count,
+          loan1,
 
-          p2.name, p2_score,
-          p2.hp, p2.money, p2.spy_count, loan2
+          p2.name,
+          p2_score,
+          hp_bar2,
+          p2.hp,
+          money_bar2,
+          p2.money,
+          spy_bar2,
+          p2.spy_count,
+          loan2
           );
         send_msg(p1_sock, buffer);
         send_msg(p2_sock, buffer);
@@ -436,8 +773,8 @@ int main(int argc, char *argv[]) {
             p1_spy_count++;   
             p2_spy_count++;
 
-            send_msg(p1_sock, "[SPY] Both players used spy. No information gained. Both lose 1 spy!\n");
-            send_msg(p2_sock, "[SPY] Both players used spy. No information gained. Both lose 1 spy!\n");
+            strcat(event1, "[SPY] Both players used spy. No information gained. Both lose 1 spy!\n");
+            strcat(event2, "[SPY] Both players used spy. No information gained. Both lose 1 spy!\n");
         }
         else if (p1_spy && !p2_spy) {
             p1.spy_count--;
@@ -512,8 +849,11 @@ int main(int argc, char *argv[]) {
             p1.loan_timer = 4;
             p1_loan++;
 
-            send_msg(p1_sock, "[INFO] Loan taken: +$5. Pay $7 in 3 turns.\n");
-            send_msg(p1_sock, "[DEBT] You are now in debt!\n");
+            strcat(event1,
+            "[INFO] Loan taken: +$5. Pay $7 in 3 turns.\n");
+
+            strcat(event1,
+            "[DEBT] You are now in debt!\n");
         }
         else if (strcmp(p1_action, "allin") == 0) {
             int dmg = p1.money / 2;
@@ -554,8 +894,11 @@ int main(int argc, char *argv[]) {
             p2.loan_timer = 4;
             p2_loan++;
 
-            send_msg(p2_sock, "[INFO] Loan taken: +$5. Pay $7 in 3 turns.\n");
-            send_msg(p2_sock, "[DEBT] You are now in debt!\n");
+            strcat(event2,
+            "[INFO] Loan taken: +$5. Pay $7 in 3 turns.\n");
+
+            strcat(event2,
+            "[DEBT] You are now in debt!\n");
         }
         else if (strcmp(p2_action, "allin") == 0) {
             int dmg = p2.money / 2;
@@ -594,7 +937,7 @@ int main(int argc, char *argv[]) {
                     p1.hp -= 3;
                     
                     d1 += 3;
-                    send_msg(p1_sock, "[PENALTY] Failed to pay loan. -3 HP\n");
+                    strcpy(penalty1, "[PENALTY] Failed to pay loan. -3 HP\n");
                 }
                 p1.loan_timer = -1;
             }
@@ -610,7 +953,7 @@ int main(int argc, char *argv[]) {
                     p2.hp -= 3;
                     
                     d2 += 3;
-                    send_msg(p2_sock, "[PENALTY] Failed to pay loan. -3 HP\n");
+                    strcpy(penalty2, "[PENALTY] Failed to pay loan. -3 HP\n");
                 }
                 p2.loan_timer = -1;
             }
@@ -630,24 +973,54 @@ int main(int argc, char *argv[]) {
         snprintf(p2_display, sizeof(p2_display), "%.10s", p2_action);
             
         snprintf(summary, MAX,
-        "\n==================================================\n"
-        "                ROUND %d SUMMARY\n"
-        "==================================================\n"
+        "\n"
 
-        " %-10s | USED : %-10s | DAMAGE : -%-2d HP\n"
-        " %-10s | USED : %-10s | DAMAGE : -%-2d HP\n"
+        CYAN "╔════════════════════════════════════════════════════════════╗\n" RESET
 
-        "==================================================\n",
+        CYAN "║" RESET
+        YELLOW "                    ROUND %-2d SUMMARY                    "
+        CYAN "    ║\n" RESET
 
+        CYAN "╠════════════════════════════════════════════════════════════╣\n" RESET
+
+        GREEN "║" RESET
+        WHITE " %-12s " RESET
+        CYAN "│" RESET
+        WHITE " ACTION : %-10s " RESET
+        CYAN "│" RESET
+        RED " DAMAGE : -%-2d ❤ " RESET
+        GREEN "       ║\n" RESET
+
+        BLUE "║" RESET
+        WHITE " %-12s " RESET
+        CYAN "│" RESET
+        WHITE " ACTION : %-10s " RESET
+        CYAN "│" RESET
+        RED " DAMAGE : -%-2d ❤ " RESET
+        BLUE "       ║\n" RESET
+
+        CYAN "╚════════════════════════════════════════════════════════════╝\n" RESET,
         round,
 
         p1.name, p1_display, d1,
         p2.name, p2_display, d2
         );
-
-        send_msg(p1_sock, summary);
-        send_msg(p2_sock, summary);
         
+        strcpy(prev_summary1, summary);
+        strcpy(prev_summary2, summary);
+        
+        if (strlen(event1) > 0)
+            strcat(prev_summary1, event1);
+
+        if (strlen(event2) > 0)
+            strcat(prev_summary2, event2);
+
+        if (strlen(penalty1) > 0)
+            strcat(prev_summary1, penalty1);
+
+        if (strlen(penalty2) > 0)
+            strcat(prev_summary2, penalty2);
+                
         if (p1.hp == 0 || p2.hp == 0) {
             break;
         }
@@ -656,7 +1029,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (p1.hp <= 0 && p2.hp <= 0) {
-
+    
     send_msg(p1_sock, "Draw Round!\n");
     send_msg(p2_sock, "Draw Round!\n");
 
@@ -684,64 +1057,429 @@ int main(int argc, char *argv[]) {
         send_msg(p1_sock, buffer);
         send_msg(p2_sock, buffer);
     }
+    
+    match++;
+    
     if (p1_score < 2 && p2_score < 2) {
 
         snprintf(buffer, MAX,
-          "\n==================================================\n"
-          "               NEXT MATCH STARTING\n"
-          "\n"
-          "        CURRENT SCORE: %s (%d) - %s (%d)\n"
-          "==================================================\n",
-          p1.name, p1_score,
-          p2.name, p2_score);
 
+        "\n"
+
+        CYAN "════════════════════════════════════════════════════════════\n" RESET
+
+        YELLOW "                     NEXT MATCH STARTING\n" RESET
+
+        CYAN "════════════════════════════════════════════════════════════\n" RESET
+
+        "\n"
+
+        GREEN "             CURRENT SCORE: " RESET
+        WHITE "%.8s (%d)" RESET
+        CYAN "  -  " RESET
+        WHITE "%.8s (%d)\n" RESET
+
+        "\n"
+
+        CYAN "════════════════════════════════════════════════════════════\n" RESET,
+
+        p1.name,
+        p1_score,
+        p2.name,
+        p2_score);
+        
         send_msg(p1_sock, buffer);
         send_msg(p2_sock, buffer);
     }
+    
+    if (p1_score < 2 && p2_score < 2) {
+
+        char ready[10];
+        int p1_ready = 0, p2_ready = 0;
+
+        send_msg(p1_sock,
+        "\n[READY] Press ENTER when ready for the next match...");
+        
+        send_msg(p2_sock,
+        "\n[READY] Press ENTER when ready for the next match...");
+
+        while (!p1_ready || !p2_ready) {
+
+            fd_set readyfds;
+            FD_ZERO(&readyfds);
+
+            if (!p1_ready) FD_SET(p1_sock, &readyfds);
+            if (!p2_ready) FD_SET(p2_sock, &readyfds);
+
+            int maxfd = (p1_sock > p2_sock ? p1_sock : p2_sock) + 1;
+
+            select(maxfd, &readyfds, NULL, NULL, NULL);
+
+            if (!p1_ready && FD_ISSET(p1_sock, &readyfds)) {
+
+                recv_msg(p1_sock, ready);
+                p1_ready = 1;
+
+                if (!p2_ready) {
+
+                    send_msg(p1_sock,
+                    "[WAITING] Waiting for other player...\n");
+
+                    send_msg(p2_sock,
+                    "\n[INFO] Opponent is ready.\n");
+                }
+            }
+
+            if (!p2_ready && FD_ISSET(p2_sock, &readyfds)) {
+
+                recv_msg(p2_sock, ready);
+                p2_ready = 1;
+
+                if (!p1_ready) {
+
+                    send_msg(p2_sock,
+                    "[WAITING] Waiting for other player...\n");
+
+                    send_msg(p1_sock,
+                    "\n[INFO] Opponent is ready.\n");
+                }
+            }
+        }
+
+        send_msg(p1_sock,
+        "\n[START] Both players are ready!\n");
+
+        send_msg(p2_sock,
+        "\n[START] Both players are ready!\n");
+        
+        send_msg(p1_sock, "\033[2J\033[H");
+        send_msg(p2_sock, "\033[2J\033[H");
     }
     
+    }
+    
+    // ===== FINAL MATCH RESULT =====
+
     if (p1_score == 2) {
 
-    snprintf(buffer, MAX,
-        "\n%s WINS THE MATCH!\n", p1.name);
+        // ================= WINNER =================
+
+        snprintf(buffer, MAX,
+        
+        "\n"
+        GOLD
+        "                    ___________\n"
+        "                   '._==_==_=_.'\n"
+        "                   .-\\:      /-.\n"
+        "  CONGRATULATIONS | (|:.     |) | YOU ARE THE WINNER!\n"
+        "                   '-|:.     |-'\n"
+        "                     \\::.    /\n"
+        "                      '::. .'\n"
+        "                        ) (\n"
+        "                      _.' '._\n"
+        "                     `\"\"\"\"\"\"\"`\n"
+        RESET
+
+        "\n"
+        GOLD
+        "╔════════════════════════════════════════════════════╗\n"
+        "║                    TOTAL VICTORY                   ║\n"
+        "╠════════════════════════════════════════════════════╣\n"
+        "║                                                    ║\n"
+        "║                  ENEMY ELIMINATED                  ║\n"
+        "║                                                    ║\n"
+        "║              No comeback was possible.             ║\n"
+        "║                                                    ║\n"
+        "║             Every round tilted your way.           ║\n"
+        "║                                                    ║\n"
+        "║                THE MATCH IS YOURS!!!               ║\n"
+        "║                                                    ║\n"
+        "╚════════════════════════════════════════════════════╝\n"
+        RESET
+        );
+
+        send_msg(p1_sock, buffer);
+
+
+        // ================= LOSER =================
+
+        snprintf(buffer, MAX,
+
+        "\n"
+        RED
+        "╔════════════════════════════════════════════════════╗\n"
+        "║                      DEFEAT                        ║\n"
+        "╠════════════════════════════════════════════════════╣\n"
+        "║                                                    ║\n"
+        "║                 YOUR HP HIT ZERO                   ║\n"
+        "║                                                    ║\n"
+        "║             The opponent broke through.            ║\n"
+        "║                                                    ║\n"
+        "║               Regroup and try again.               ║\n"
+        "║                                                    ║\n"
+        "║                  MATCH TERMINATED                  ║\n"
+        "║                                                    ║\n"
+        "╚════════════════════════════════════════════════════╝\n"
+        RESET
+        );
+
+        send_msg(p2_sock, buffer);
 
     }
     else {
 
-        snprintf(buffer, MAX,
-            "\n%s WINS THE MATCH!\n", p2.name);
-    }
+        // ================= WINNER =================
 
-    send_msg(p1_sock, buffer);
-    send_msg(p2_sock, buffer);
+        snprintf(buffer, MAX,
+        
+        "\n"
+        GOLD
+        "                    ___________\n"
+        "                   '._==_==_=_.'\n"
+        "                   .-\\:      /-.\n"
+        "  CONGRATULATIONS | (|:.     |) | YOU ARE THE WINNER!\n"
+        "                   '-|:.     |-'\n"
+        "                     \\::.    /\n"
+        "                      '::. .'\n"
+        "                        ) (\n"
+        "                      _.' '._\n"
+        "                     `\"\"\"\"\"\"\"`\n"
+        RESET
+
+        "\n"
+        GOLD
+        "╔════════════════════════════════════════════════════╗\n"
+        "║                    TOTAL VICTORY                   ║\n"
+        "╠════════════════════════════════════════════════════╣\n"
+        "║                                                    ║\n"
+        "║                  ENEMY ELIMINATED                  ║\n"
+        "║                                                    ║\n"
+        "║              No comeback was possible.             ║\n"
+        "║                                                    ║\n"
+        "║             Every round tilted your way.           ║\n"
+        "║                                                    ║\n"
+        "║                THE MATCH IS YOURS!!!               ║\n"
+        "║                                                    ║\n"
+        "╚════════════════════════════════════════════════════╝\n"
+        RESET
+        );
+
+        send_msg(p2_sock, buffer);
+
+
+        // ================= LOSER =================
+
+        snprintf(buffer, MAX,
+
+        "\n"
+        RED
+        "╔════════════════════════════════════════════════════╗\n"
+        "║                      DEFEAT                        ║\n"
+        "╠════════════════════════════════════════════════════╣\n"
+        "║                                                    ║\n"
+        "║                 YOUR HP HIT ZERO                   ║\n"
+        "║                                                    ║\n"
+        "║             The opponent broke through.            ║\n"
+        "║                                                    ║\n"
+        "║               Regroup and try again.               ║\n"
+        "║                                                    ║\n"
+        "║                  MATCH TERMINATED                  ║\n"
+        "║                                                    ║\n"
+        "╚════════════════════════════════════════════════════╝\n"
+        RESET
+        );
+
+        send_msg(p1_sock, buffer);
+    }
     
     char final[MAX];
 
     snprintf(final, MAX,
-    "\n=========== MATCH STATS ===========\n"
 
-    "%s\n"
-    "  HP Left       : %d\n"
-    "  Money Left    : $%d\n"
-    "  Total Damage  : %d\n"
-    "  Spy Used      : %d\n"
-    "----------------------------------\n"
-    "%s\n"
-    "  HP Left       : %d\n"
-    "  Money Left    : $%d\n"
-    "  Total Damage  : %d\n"
-    "  Spy Used      : %d\n"
+    "\n"
+    "╔══════════════════════════════════════════════════════════════════════════╗\n"
+    "║                           WHOLE MATCH STATS                              ║\n"
+    "╠══════════════╦═══════╦════════╦═════╦═════╦══════╦═════╦══════╦══════════╣\n"
+    "║ PLAYER       ║ SCORE ║ DAMAGE ║ ATK ║ DEF ║ WORK ║ SPY ║ LOAN ║ ALL-IN   ║\n"
+    "╠══════════════╬═══════╬════════╬═════╬═════╬══════╬═════╬══════╬══════════╣\n"
 
-    "==================================\n",
-    p1.name, p1.hp, p1.money, p1_total_damage, p1_spy_count,
-    p2.name, p2.hp, p2.money, p2_total_damage, p2_spy_count
+    "║ %-12.12s ║ %-5d ║ %-6d ║ %-3d ║ %-3d ║ %-4d ║ %-3d ║ %-4d ║ %-8d ║\n"
+
+    "║ %-12.12s ║ %-5d ║ %-6d ║ %-3d ║ %-3d ║ %-4d ║ %-3d ║ %-4d ║ %-8d ║\n"
+
+    "╚══════════════╩═══════╩════════╩═════╩═════╩══════╩═════╩══════╩══════════╝\n",
+
+    p1.name,
+    p1_score,
+    p1_total_damage,
+    p1_attack,
+    p1_defend,
+    p1_work,
+    p1_spy_count,
+    p1_loan,
+    p1_allin,
+
+    p2.name,
+    p2_score,
+    p2_total_damage,
+    p2_attack,
+    p2_defend,
+    p2_work,
+    p2_spy_count,
+    p2_loan,
+    p2_allin
     );
 
     send_msg(p1_sock, final);
     send_msg(p2_sock, final);
     
+    char p1_rematch[10];
+    char p2_rematch[10];
+
+    int p1_done = 0;
+    int p2_done = 0;
+
+    send_msg(p1_sock,
+    "\n[REMATCH] Play again? (yes/no): ");
+
+    send_msg(p2_sock,
+    "\n[REMATCH] Play again? (yes/no): ");
+
+    while (!p1_done || !p2_done) {
+
+        fd_set rematchfds;
+        FD_ZERO(&rematchfds);
+
+        if (!p1_done) FD_SET(p1_sock, &rematchfds);
+        if (!p2_done) FD_SET(p2_sock, &rematchfds);
+
+        int maxfd = (p1_sock > p2_sock ? p1_sock : p2_sock) + 1;
+
+        select(maxfd, &rematchfds, NULL, NULL, NULL);
+
+        // PLAYER 1
+        if (!p1_done && FD_ISSET(p1_sock, &rematchfds)) {
+
+            recv_msg(p1_sock, p1_rematch);
+
+            if (strcmp(p1_rematch, "yes") != 0 &&
+                strcmp(p1_rematch, "no") != 0) {
+
+                send_msg(p1_sock,
+                "[ERROR] Type only yes or no: ");
+            }
+            else {
+
+                p1_done = 1;
+
+                if (!p2_done) {
+
+                    send_msg(p1_sock,
+                    "[WAITING] Waiting for other player...\n");
+
+                    send_msg(p2_sock,
+                    "[INFO] Opponent answered.\n");
+                }
+            }
+        }
+
+        // PLAYER 2
+        if (!p2_done && FD_ISSET(p2_sock, &rematchfds)) {
+
+            recv_msg(p2_sock, p2_rematch);
+
+            if (strcmp(p2_rematch, "yes") != 0 &&
+                strcmp(p2_rematch, "no") != 0) {
+
+                send_msg(p2_sock,
+                "[ERROR] Type only yes or no: ");
+            }
+            else {
+
+                p2_done = 1;
+
+                if (!p1_done) {
+
+                    send_msg(p2_sock,
+                    "[WAITING] Waiting for other player...\n");
+
+                    send_msg(p1_sock,
+                    "\n[INFO] Opponent answered.\n");
+                }
+            }
+        }
+    }
+
+        if (strcmp(p1_rematch, "yes") == 0 &&
+            strcmp(p2_rematch, "yes") == 0) {
+
+            send_msg(p1_sock, "\033[2J\033[H");
+            send_msg(p2_sock, "\033[2J\033[H");
+
+            send_msg(p1_sock,
+            "\n[REMATCH] Starting new game...\n");
+
+            send_msg(p2_sock,
+            "\n[REMATCH] Starting new game...\n");
+            
+            continue;
+
+        }
+        else {
+
+            send_msg(p1_sock,
+            "\n[GAME] Match ended.\n");
+
+            send_msg(p2_sock,
+            "\n[GAME] Match ended.\n");
+            
+            send_msg(p1_sock,
+
+            "\n"
+            "╔════════════════════════════════════════════════════╗\n"
+            "║                THANK YOU FOR PLAYING               ║\n"
+            "╠════════════════════════════════════════════════════╣\n"
+            "║                                                    ║\n"
+            "║          Every battle sharpens a player.           ║\n"
+            "║                                                    ║\n"
+            "║           Wins build confidence. Losses            ║\n"
+            "║                 build experience.                  ║\n"
+            "║                                                    ║\n"
+            "║              Keep improving. Keep                  ║\n"
+            "║                    fighting.                       ║\n"
+            "║                                                    ║\n"
+            "║                See you next match.                 ║\n"
+            "║                                                    ║\n"
+            "╚════════════════════════════════════════════════════╝\n");
+
+
+            send_msg(p2_sock,
+
+            "\n"
+            "╔════════════════════════════════════════════════════╗\n"
+            "║                THANK YOU FOR PLAYING               ║\n"
+            "╠════════════════════════════════════════════════════╣\n"
+            "║                                                    ║\n"
+            "║          Every battle sharpens a player.           ║\n"
+            "║                                                    ║\n"
+            "║           Wins build confidence. Losses            ║\n"
+            "║                 build experience.                  ║\n"
+            "║                                                    ║\n"
+            "║              Keep improving. Keep                  ║\n"
+            "║                    fighting.                       ║\n"
+            "║                                                    ║\n"
+            "║                See you next match.                 ║\n"
+            "║                                                    ║\n"
+            "╚════════════════════════════════════════════════════╝\n");
+            
+            break;
+        }
+    
+    }
+    
     close(p1_sock);
     close(p2_sock);
     close(server_sock);
+
     return 0;
 }
