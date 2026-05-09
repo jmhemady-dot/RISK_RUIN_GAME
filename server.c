@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <netinet/in.h>
 
 #define MAX 8192
@@ -117,7 +118,8 @@ void send_instructions(int sock, Player *p) {
     RESET
     "  │   Uses 1 Spy charge.                                          │\n"
     "  │   Reveal opponent action and choose again.                    │\n"
-    "  │   If both players use SPY, no information is revealed.        │\n"
+    "  │   If both players use SPY, no information                     │\n"
+    "  │   is revealed. Both Players loses Spy charge.                 │\n"
 
     "  │                                                               │\n"
 
@@ -691,6 +693,9 @@ int main(int argc, char *argv[]) {
             // ===== PLAYER 1 =====
             if (FD_ISSET(p1_sock, &readfds) && !p1_done) {
                 recv_msg(p1_sock, p1_action);
+                for (int i = 0; p1_action[i]; i++) {
+                    p1_action[i] = tolower(p1_action[i]);
+                }
 
                 if (strcmp(p1_action, "spy") == 0 && p1.spy_count <= 0) {
 
@@ -728,6 +733,9 @@ int main(int argc, char *argv[]) {
             // ===== PLAYER 2 =====
             if (FD_ISSET(p2_sock, &readfds) && !p2_done) {
                 recv_msg(p2_sock, p2_action);
+                for (int i = 0; p2_action[i]; i++) {
+                    p2_action[i] = tolower(p2_action[i]);
+                }
 
                 if (strcmp(p2_action, "spy") == 0 && p2.spy_count <= 0) {
 
