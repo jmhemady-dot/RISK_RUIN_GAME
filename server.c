@@ -670,7 +670,7 @@ int main(int argc, char *argv[]) {
         }
 
         if (p1.money >= 7) {
-            send_msg(p2_sock, "[TIP] Opponent is rich. Consider DEFEND.\n");
+            send_msg(p2_sock, "[TIP] Opponent is rich. Consider DEFEND or SPY. Play Smart!\n");
         }
 
         // ===== ACTION INPUT (SIMULTANEOUS) =====
