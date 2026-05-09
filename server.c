@@ -44,6 +44,7 @@ void send_instructions(int sock, Player *p) {
   
     snprintf(rules, MAX,
     "\n"
+    
     CYAN 
     "╔════════════════════════════════════════════════════════════════════╗\n"
     "║                      WELCOME TO RISK OR RUIN                       ║\n"
@@ -1212,7 +1213,16 @@ int main(int argc, char *argv[]) {
         // ================= LOSER =================
 
         snprintf(buffer, MAX,
-
+        RED
+        "\n"
+        "             _      ____   _____ _______ \n"
+        "            | |    / __ \\ / ____|__   __|\n"
+        "            | |   | |  | | (___    | |   \n"
+        "            | |   | |  | |\\___ \\   | |   \n"
+        "            | |___| |__| |____) |  | |   \n"
+        "            |______\\____/|_____/   |_|   \n"
+        RESET
+        
         "\n"
         RED
         "╔════════════════════════════════════════════════════╗\n"
@@ -1278,7 +1288,16 @@ int main(int argc, char *argv[]) {
         // ================= LOSER =================
 
         snprintf(buffer, MAX,
-
+         RED
+        "\n"
+        "             _      ____   _____ _______ \n"
+        "            | |    / __ \\ / ____|__   __|\n"
+        "            | |   | |  | | (___    | |   \n"
+        "            | |   | |  | |\\___ \\   | |   \n"
+        "            | |___| |__| |____) |  | |   \n"
+        "            |______\\____/|_____/   |_|   \n"
+        RESET
+        
         "\n"
         RED
         "╔════════════════════════════════════════════════════╗\n"
@@ -1386,7 +1405,7 @@ int main(int argc, char *argv[]) {
                     "[WAITING] Waiting for other player...\n");
 
                     send_msg(p2_sock,
-                    "[INFO] Opponent answered.\n");
+                    "\n[INFO] Opponent answered.\n");
                 }
             }
         }
